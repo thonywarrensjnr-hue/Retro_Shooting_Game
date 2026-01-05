@@ -1,13 +1,7 @@
 🕹️ Desert Arena - Retro Multiplayer Shooter
 
-https://screenshots/gameplay.png
-
 A real-time multiplayer shooting game built with Python and Pygame, featuring retro aesthetics and production-ready networking architecture. Perfect for game jams, learning multiplayer programming, or competitive local play.
 
-https://img.shields.io/badge/python-3.8+-blue.svg
-https://img.shields.io/badge/pygame-2.0+-green.svg
-https://img.shields.io/badge/License-MIT-yellow.svg
-https://img.shields.io/badge/multiplayer-2--8_players-red.svg
 🎮 Features
 🎯 Gameplay
 
