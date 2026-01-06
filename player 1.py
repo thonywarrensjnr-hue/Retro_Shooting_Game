@@ -30,14 +30,12 @@ class GameClient:
         self.player_score = 0
         self.player_direction = 'right'
         self.last_shot = 0
-        self.shot_cooldown = 300  # ms
-
-        # Add these for damage system:
+        self.shot_cooldown = 300  
         self.is_invulnerable = False
         self.invulnerability_timer = 0
-        self.invulnerability_duration = 1000  # milliseconds
+        self.invulnerability_duration = 1000  
         self.hit_flash = False
-        self.debug_mode = True  # Enable debug mode
+        self.debug_mode = True 
 
         self.other_players = {}
         self.bullets = []
@@ -95,26 +93,21 @@ class GameClient:
             self.death_sound = None
 
     def take_damage(self, amount):
-        """Call this when player gets hit"""
         if not self.is_invulnerable and self.player_health > 0:
             self.player_health -= amount
             self.is_invulnerable = True
             self.invulnerability_timer = pygame.time.get_ticks()
             self.hit_flash = True
 
-            # Clamp health to minimum 0
             if self.player_health < 0:
                 self.player_health = 0
-
-            # Play hit sound
             if self.hit_sound:
                 self.hit_sound.play()
 
             return True
         return False
-    
+
     def update_invulnerability(self):
-        """Update invulnerability state - call this every frame"""
         current_time = pygame.time.get_ticks()
         if self.is_invulnerable:
             if current_time - self.invulnerability_timer > self.invulnerability_duration:
@@ -122,14 +115,9 @@ class GameClient:
                 self.hit_flash = False
 
     def check_bullet_player_collision(self, bullet, player_x, player_y):
-        """Check if a bullet collides with a player"""
-        # Player collision radius
         player_radius = 15
-        
-        # Calculate distance between bullet and player center
-        distance = math.sqrt((bullet['x'] - player_x)**2 + (bullet['y'] - player_y)**2)
-        
-        # Collision if distance is less than player radius
+        distance = math.sqrt((bullet['x'] - player_x) ** 2 + (bullet['y'] - player_y) ** 2)
+
         return distance < player_radius
 
     def create_retro_graphics(self):
@@ -246,17 +234,15 @@ class GameClient:
 
         screen_x = x - self.camera_x
         screen_y = y - self.camera_y
-
-        # Visual feedback when hit
+        
         if is_current_player and self.hit_flash and self.is_invulnerable:
-            # Flash effect
-            if pygame.time.get_ticks() % 200 < 100:  # Blink every 200ms
+
+            if pygame.time.get_ticks() % 200 < 100:  
                 flash_multiplier = 1.5
-                # Temporarily make colors brighter
                 body_color = tuple(min(255, int(c * 1.5)) for c in colors['body'])
                 hat_color = tuple(min(255, int(c * 1.5)) for c in colors['hat'])
                 colors = {'body': body_color, 'hat': hat_color, 'gun': colors['gun']}
-        
+
         pygame.draw.circle(self.screen, (50, 50, 50, 150),
                            (int(screen_x + 3), int(screen_y + 3)), 15)
 
@@ -379,20 +365,18 @@ class GameClient:
 
         elif packet.op_code == OpCode.MOVE:
             player_id = packet.sender_id
-            
-            # DEBUG: Print what we receive
+
             print(f"📡 RECEIVED MOVE from player {player_id}:")
             print(f"   Position: ({packet.data.get('x', 400)}, {packet.data.get('y', 300)})")
             print(f"   Health: {packet.data.get('health', 100)}")
-            
-            # Always update, even if it's our own data (from another client)
+
             self.other_players[player_id] = {
                 'x': packet.data.get('x', 400),
                 'y': packet.data.get('y', 300),
                 'health': packet.data.get('health', 100),
                 'direction': packet.data.get('direction', 'right')
             }
-            
+
             print(f"📊 Now tracking {len(self.other_players)} other players")
 
         elif packet.op_code == OpCode.BULLET:
@@ -413,16 +397,13 @@ class GameClient:
             shooter_id = packet.data.get('shooter_id')
 
             if target_id == self.client_id:
-                # Update health from server
                 self.player_health -= damage
                 self.player_health = max(0, self.player_health)
                 print(f"💥 Server says you took {damage} damage! Health: {self.player_health}")
-                
-                # Play hit sound
+
                 if self.hit_sound:
                     self.hit_sound.play()
-                
-                # Visual feedback
+
                 for _ in range(15):
                     angle = random.uniform(0, 2 * math.pi)
                     speed = random.uniform(2, 6)
@@ -473,24 +454,23 @@ class GameClient:
                             'size': random.randint(2, 4)
                         })
 
-        # ADD THIS NEW SECTION FOR SCORE UPDATES
         elif packet.op_code == OpCode.SCORE_UPDATE:
             player_id = packet.data.get('player_id')
             score = packet.data.get('score', 0)
             kills = packet.data.get('kills', 0)
-            
+
             if player_id == self.client_id:
                 self.player_score = score
                 print(f"💰 Your score updated: ${score} (Kills: {kills})")
             elif player_id in self.other_players:
-                # You could update other players' scores here if you want to display them
+                
                 pass
 
         elif packet.op_code == OpCode.RESPAWN:
             player_id = packet.sender_id
             if player_id == self.client_id:
                 self.player_health = 100
-                self.is_invulnerable = False  # Reset invulnerability on respawn
+                self.is_invulnerable = False  
                 self.hit_flash = False
                 if 'x' in packet.data and 'y' in packet.data:
                     self.player_pos = [packet.data.get('x', 400), packet.data.get('y', 300)]
@@ -519,36 +499,31 @@ class GameClient:
 
     def update_bullets(self):
         for bullet in self.bullets[:]:
-            # Move bullet
             bullet['x'] += bullet['dx'] * 8
             bullet['y'] += bullet['dy'] * 8
-            
-            # Check if bullet hits YOU
+
             if bullet['owner'] != self.client_id and self.player_health > 0:
-                distance = math.sqrt((bullet['x'] - self.player_pos[0])**2 + 
-                                   (bullet['y'] - self.player_pos[1])**2)
-                
-                if distance < 25:  # Collision radius
+                distance = math.sqrt((bullet['x'] - self.player_pos[0]) ** 2 +
+                                     (bullet['y'] - self.player_pos[1]) ** 2)
+
+                if distance < 25: 
                     print(f"🎯 YOU GOT HIT by player {bullet['owner']}!")
                     print(f"💥 Health before: {self.player_health}")
-                    
-                    # Apply damage locally immediately
+
+
                     self.player_health -= 10
                     if self.player_health < 0:
                         self.player_health = 0
-                    
+
                     print(f"💔 Health after: {self.player_health}")
-                    
-                    # Visual effects
+
                     self.hit_flash = True
                     self.is_invulnerable = True
                     self.invulnerability_timer = pygame.time.get_ticks()
-                    
-                    # Play sound
+
                     if self.hit_sound:
                         self.hit_sound.play()
-                    
-                    # Blood particles
+
                     for _ in range(15):
                         angle = random.uniform(0, 2 * math.pi)
                         speed = random.uniform(2, 6)
@@ -561,36 +536,36 @@ class GameClient:
                             'life': 30,
                             'size': random.randint(2, 5)
                         })
-                    
-                    # Tell server you got hit
+
+
                     self.send_packet(OpCode.HIT, {
                         'target_id': self.client_id,
                         'damage': 10,
                         'shooter_id': bullet['owner']
                     })
-                    
-                    # Remove bullet
+
+
                     self.bullets.remove(bullet)
                     continue
-            
-            # Check if YOUR bullet hits other players
+
+
             if bullet['owner'] == self.client_id:
                 for player_id, player_data in self.other_players.items():
                     if player_data['health'] > 0:
-                        distance = math.sqrt((bullet['x'] - player_data['x'])**2 + 
-                                           (bullet['y'] - player_data['y'])**2)
-                        
-                        if distance < 25:  # Collision radius
+                        distance = math.sqrt((bullet['x'] - player_data['x']) ** 2 +
+                                             (bullet['y'] - player_data['y']) ** 2)
+
+                        if distance < 25:  
                             print(f"🎯 YOU HIT player {player_id}!")
-                            
-                            # Tell server you hit someone
+
+        
                             self.send_packet(OpCode.HIT, {
                                 'target_id': player_id,
                                 'damage': 10,
                                 'shooter_id': self.client_id
                             })
-                            
-                            # Blood particles at their location
+
+
                             for _ in range(10):
                                 angle = random.uniform(0, 2 * math.pi)
                                 speed = random.uniform(2, 5)
@@ -603,12 +578,12 @@ class GameClient:
                                     'life': 25,
                                     'size': random.randint(2, 4)
                                 })
-                            
-                            # Remove bullet
+
+
                             self.bullets.remove(bullet)
                             break
-            
-            # Remove bullet if out of bounds
+
+
             if (bullet['x'] < 0 or bullet['x'] > 800 or
                     bullet['y'] < 0 or bullet['y'] > 600):
                 self.bullets.remove(bullet)
@@ -670,65 +645,54 @@ class GameClient:
             })
 
     def draw_life_bar(self):
-        """Draw the player's life bar"""
-        # Life bar dimensions
         bar_width = 200
         bar_height = 20
         bar_x = 20
         bar_y = 20
 
-        # Calculate health percentage
+
         health_percentage = self.player_health / 100.0
 
-        # Draw background (empty health)
         pygame.draw.rect(self.screen, (50, 50, 50),
                          (bar_x, bar_y, bar_width, bar_height))
 
-        # Draw current health
-        current_width = bar_width * health_percentage
-        health_color = (0, 255, 0)  # Green
 
-        # Change color based on health
+        current_width = bar_width * health_percentage
+        health_color = (0, 255, 0)  
+
         if health_percentage < 0.3:
-            health_color = (255, 0, 0)  # Red when low
+            health_color = (255, 0, 0)  
         elif health_percentage < 0.6:
-            health_color = (255, 255, 0)  # Yellow when medium
+            health_color = (255, 255, 0)  
 
         pygame.draw.rect(self.screen, health_color,
                          (bar_x, bar_y, current_width, bar_height))
 
-        # Draw border
         pygame.draw.rect(self.screen, (255, 255, 255),
                          (bar_x, bar_y, bar_width, bar_height), 2)
 
-        # Draw health text
         font = pygame.font.Font(None, 24)
         health_text = font.render(f"HP: {self.player_health}/100",
                                   True, (255, 255, 255))
         self.screen.blit(health_text, (bar_x, bar_y + bar_height + 5))
 
     def draw_ui(self):
-        # DEBUG: Show connection status
         if not self.connected:
             error_text = self.font_medium.render("NOT CONNECTED", True, (255, 0, 0))
             self.screen.blit(error_text, (400, 300))
-        
-        # Show player count clearly
+
         player_count = len(self.other_players) + 1
         count_text = self.font_large.render(f"Players: {player_count}", True,
                                             (255, 255, 255) if player_count > 1 else (255, 100, 100))
         self.screen.blit(count_text, (600, 100))
 
-        # Draw the life bar
         self.draw_life_bar()
-        
-        # Draw score and kills
+
         pygame.draw.rect(self.screen, (200, 180, 140), (20, 60, 200, 40))
         pygame.draw.rect(self.screen, (150, 120, 90), (20, 60, 200, 40), 3)
         score_text = self.font_medium.render(f"BOUNTY: ${self.player_score}", True, (50, 30, 10))
         self.screen.blit(score_text, (30, 68))
 
-        # Draw kills if you have any
         if self.player_score > 0:
             kills_text = self.font_small.render(f"ELIMINATIONS: {self.player_score // 100}", True, (200, 50, 50))
             self.screen.blit(kills_text, (30, 95))
@@ -736,10 +700,10 @@ class GameClient:
         if self.client_id:
             id_text = self.font_small.render(f"COWBOY #{self.client_id}", True, (255, 255, 200))
             self.screen.blit(id_text, (20, 110))
-        
+
         players_text = self.font_small.render(f"PLAYERS: {len(self.other_players) + 1}", True, (200, 200, 200))
         self.screen.blit(players_text, (20, 140))
-        
+
         cooldown_percent = min(1.0, (pygame.time.get_ticks() - self.last_shot) / self.shot_cooldown)
         ammo_width = int(100 * cooldown_percent)
 
@@ -749,7 +713,7 @@ class GameClient:
         ammo_text = self.font_tiny.render("READY" if cooldown_percent >= 1.0 else "RELOADING",
                                           True, (255, 255, 200))
         self.screen.blit(ammo_text, (690, 24))
-        
+
         pygame.draw.rect(self.screen, (150, 120, 90), (600, 50, 180, 120))
         pygame.draw.rect(self.screen, (120, 90, 60), (600, 50, 180, 120), 3)
 
@@ -856,20 +820,16 @@ class GameClient:
             self.update_bullets()
             self.update_particles()
             self.update_invulnerability()
-            
+
             if self.connected:
                 self.draw_desert_background()
-                
-                # Draw debug red circles for other players
+
                 for player_id, player_data in self.other_players.items():
                     if player_data['health'] > 0:
-                        # Draw red circle where player should be
                         screen_x = player_data['x'] - self.camera_x
                         screen_y = player_data['y'] - self.camera_y
-                        pygame.draw.circle(self.screen, (255, 0, 0), 
-                                         (int(screen_x), int(screen_y)), 25, 2)
-                        
-                        # Draw the actual player
+                        pygame.draw.circle(self.screen, (255, 0, 0),
+                                           (int(screen_x), int(screen_y)), 25, 2)
                         self.draw_player(
                             player_data['x'],
                             player_data['y'],
@@ -898,8 +858,8 @@ class GameClient:
                     )
 
                 self.draw_ui()
-                
-                # DEBUG: Show player positions at bottom left
+
+
                 debug_text = f"Your pos: ({self.player_pos[0]:.0f}, {self.player_pos[1]:.0f}) HP: {self.player_health}"
                 debug_surf = self.font_tiny.render(debug_text, True, (255, 255, 255))
                 self.screen.blit(debug_surf, (10, 500))
@@ -908,7 +868,7 @@ class GameClient:
                     debug_text = f"Player {pid}: ({pdata['x']:.0f}, {pdata['y']:.0f}) HP: {pdata['health']}"
                     debug_surf = self.font_tiny.render(debug_text, True, (255, 255, 255))
                     self.screen.blit(debug_surf, (10, 520 + i * 20))
-                
+
                 if len(self.other_players) == 0:
                     debug_text = "Waiting for other players..."
                     debug_surf = self.font_tiny.render(debug_text, True, (255, 100, 100))
