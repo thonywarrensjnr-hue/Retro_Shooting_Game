@@ -1,17 +1,14 @@
 import json
 import time
-
-
 class OpCode:
-    JOIN = 1
-    MOVE = 2
-    ATTACK = 3
-    HIT = 4
-    PING = 5
-    RESPAWN = 6
-    DISCONNECT = 7
-    BULLET = 8
-    COLLECT = 9
+    JOIN = "JOIN"
+    MOVE = "MOVE"
+    ATTACK = "ATTACK"
+    BULLET = "BULLET"
+    HIT = "HIT"
+    RESPAWN = "RESPAWN"
+    DISCONNECT = "DISCONNECT"
+    SCORE_UPDATE = "SCORE_UPDATE" 
 
 
 class GamePacket:
